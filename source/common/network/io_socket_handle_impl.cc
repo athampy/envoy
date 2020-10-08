@@ -1,5 +1,6 @@
 #include "common/network/io_socket_handle_impl.h"
 
+#include "envoy/api/os_sys_calls_common.h"
 #include "envoy/buffer/buffer.h"
 
 #include "common/api/os_sys_calls_impl.h"
@@ -438,6 +439,15 @@ Api::SysCallIntResult IoSocketHandleImpl::bind(Address::InstanceConstSharedPtr a
 
 Api::SysCallIntResult IoSocketHandleImpl::listen(int backlog) {
   return Api::OsSysCallsSingleton::get().listen(fd_, backlog);
+}
+
+
+IoHandlePtr IoSocketHandleImpl::accept_async(struct sockaddr* addr, socklen_t* addrlen) {
+  //add_accept_request(fd_,addr, addrlen);
+  struct io_uring_cqe *cqe;
+  //int ret = io_uring_wait_cqe(&acceptq, &cqe);
+  auto result =  cqe->user_data;
+  return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
 }
 
 IoHandlePtr IoSocketHandleImpl::accept(struct sockaddr* addr, socklen_t* addrlen) {

@@ -54,6 +54,7 @@ public:
   Api::SysCallIntResult bind(Address::InstanceConstSharedPtr address) override;
   Api::SysCallIntResult listen(int backlog) override;
   IoHandlePtr accept(struct sockaddr* addr, socklen_t* addrlen) override;
+  IoHandlePtr accept_async(struct sockaddr* addr, socklen_t* addrlen) override;
   Api::SysCallIntResult connect(Address::InstanceConstSharedPtr address) override;
   Api::SysCallIntResult setOption(int level, int optname, const void* optval,
                                   socklen_t optlen) override;
@@ -86,6 +87,19 @@ protected:
              : Api::IoErrorPtr(new IoSocketError(result.errno_), IoSocketError::deleteIoError)));
   }
 
+  int add_accept_request(int server_socket, struct sockaddr_in *client_addr,
+                       socklen_t *client_addr_len) {
+    auto *sqe = io_uring_get_sqe(&acceptq);
+    io_uring_prep_accept(sqe, server_socket, (struct sockaddr *) client_addr,
+                         client_addr_len, 0);
+    struct request *req = malloc(sizeof(*req));
+    req->event_type = EVENT_TYPE_ACCEPT;
+    io_uring_sqe_set_data(sqe, req);
+    io_uring_submit(&ring);
+    return 0;
+}
+
+  struct io_uring acceptq;
   os_fd_t fd_;
   int socket_v6only_{false};
   const absl::optional<int> domain_;

@@ -41,6 +41,7 @@ bool TcpListenerImpl::rejectCxOverGlobalLimit() {
   return AcceptedSocketImpl::acceptedSocketCount() >= global_cx_limit;
 }
 
+
 void TcpListenerImpl::onSocketEvent(short flags) {
   ASSERT(flags & (Event::FileReadyType::Read));
 
@@ -54,7 +55,7 @@ void TcpListenerImpl::onSocketEvent(short flags) {
     socklen_t remote_addr_len = sizeof(remote_addr);
 
     IoHandlePtr io_handle =
-        socket_->ioHandle().accept(reinterpret_cast<sockaddr*>(&remote_addr), &remote_addr_len);
+        socket_->ioHandle().accept_async(reinterpret_cast<sockaddr*>(&remote_addr), &remote_addr_len);
     if (io_handle == nullptr) {
       break;
     }
