@@ -9,18 +9,18 @@ licenses(["notice"])  # Apache 2
 envoy_package()
 
 envoy_cc_library(
-    name = "address_interface",
-    hdrs = ["address.h"],
-    deps = [
+    name="address_interface",
+    hdrs=["address.h"],
+    deps=[
         "//include/envoy/api:os_sys_calls_interface",
     ],
 )
 
 envoy_cc_library(
-    name = "connection_interface",
-    hdrs = ["connection.h"],
-    external_deps = ["abseil_int128"],
-    deps = [
+    name="connection_interface",
+    hdrs=["connection.h"],
+    external_deps=["abseil_int128"],
+    deps=[
         ":address_interface",
         ":filter_interface",
         ":listen_socket_interface",
@@ -32,9 +32,9 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "connection_handler_interface",
-    hdrs = ["connection_handler.h"],
-    deps = [
+    name="connection_handler_interface",
+    hdrs=["connection_handler.h"],
+    deps=[
         ":listen_socket_interface",
         ":listener_interface",
         "//include/envoy/ssl:context_interface",
@@ -42,9 +42,9 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "udp_packet_writer_handler_interface",
-    hdrs = ["udp_packet_writer_handler.h"],
-    deps = [
+    name="udp_packet_writer_handler_interface",
+    hdrs=["udp_packet_writer_handler.h"],
+    deps=[
         ":address_interface",
         ":io_handle_interface",
         ":socket_interface",
@@ -56,25 +56,25 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "dns_interface",
-    hdrs = ["dns.h"],
-    deps = ["//include/envoy/network:address_interface"],
+    name="dns_interface",
+    hdrs=["dns.h"],
+    deps=["//include/envoy/network:address_interface"],
 )
 
 envoy_cc_library(
-    name = "drain_decision_interface",
-    hdrs = ["drain_decision.h"],
+    name="drain_decision_interface",
+    hdrs=["drain_decision.h"],
 )
 
 envoy_cc_library(
-    name = "exception_interface",
-    hdrs = ["exception.h"],
+    name="exception_interface",
+    hdrs=["exception.h"],
 )
 
 envoy_cc_library(
-    name = "filter_interface",
-    hdrs = ["filter.h"],
-    deps = [
+    name="filter_interface",
+    hdrs=["filter.h"],
+    deps=[
         ":listen_socket_interface",
         ":transport_socket_interface",
         "//include/envoy/buffer:buffer_interface",
@@ -84,19 +84,19 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "hash_policy_interface",
-    hdrs = ["hash_policy.h"],
-    external_deps = ["abseil_optional"],
-    deps = [
+    name="hash_policy_interface",
+    hdrs=["hash_policy.h"],
+    external_deps=["abseil_optional"],
+    deps=[
         ":address_interface",
     ],
 )
 
 envoy_cc_library(
-    name = "io_handle_interface",
-    hdrs = ["io_handle.h"],
-    external_deps = ["abseil_optional"],
-    deps = [
+    name="io_handle_interface",
+    hdrs=["io_handle.h"],
+    external_deps=["abseil_optional"],
+    deps=[
         ":address_interface",
         "//include/envoy/api:io_error_interface",
         "//include/envoy/api:os_sys_calls_interface",
@@ -106,9 +106,9 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "socket_interface",
-    hdrs = ["socket.h"],
-    deps = [
+    name="socket_interface",
+    hdrs=["socket.h"],
+    deps=[
         ":address_interface",
         ":io_handle_interface",
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
@@ -116,18 +116,18 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "socket_interface_interface",
-    hdrs = ["socket_interface.h"],
-    deps = [
+    name="socket_interface_interface",
+    hdrs=["socket_interface.h"],
+    deps=[
         ":socket_interface",
         "//include/envoy/config:typed_config_interface",
     ],
 )
 
 envoy_cc_library(
-    name = "listen_socket_interface",
-    hdrs = ["listen_socket.h"],
-    deps = [
+    name="listen_socket_interface",
+    hdrs=["listen_socket.h"],
+    deps=[
         ":io_handle_interface",
         ":socket_interface",
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
@@ -135,9 +135,9 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "transport_socket_interface",
-    hdrs = ["transport_socket.h"],
-    deps = [
+    name="transport_socket_interface",
+    hdrs=["transport_socket.h"],
+    deps=[
         ":io_handle_interface",
         ":post_io_action_interface",
         ":proxy_protocol_options_lib",
@@ -147,23 +147,23 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "post_io_action_interface",
-    hdrs = ["post_io_action.h"],
-    deps = [],
+    name="post_io_action_interface",
+    hdrs=["post_io_action.h"],
+    deps=[],
 )
 
 envoy_cc_library(
-    name = "connection_balancer_interface",
-    hdrs = ["connection_balancer.h"],
-    deps = [
+    name="connection_balancer_interface",
+    hdrs=["connection_balancer.h"],
+    deps=[
         ":listen_socket_interface",
     ],
 )
 
 envoy_cc_library(
-    name = "listener_interface",
-    hdrs = ["listener.h"],
-    deps = [
+    name="listener_interface",
+    hdrs=["listener.h"],
+    deps=[
         ":connection_balancer_interface",
         ":connection_interface",
         ":listen_socket_interface",
@@ -177,9 +177,9 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "resolver_interface",
-    hdrs = ["resolver.h"],
-    deps = [
+    name="resolver_interface",
+    hdrs=["resolver.h"],
+    deps=[
         ":address_interface",
         "//include/envoy/config:typed_config_interface",
         "@envoy_api//envoy/config/core/v3:pkg_cc_proto",
@@ -187,18 +187,18 @@ envoy_cc_library(
 )
 
 envoy_cc_library(
-    name = "udp_packet_writer_config_interface",
-    hdrs = ["udp_packet_writer_config.h"],
-    deps = [
+    name="udp_packet_writer_config_interface",
+    hdrs=["udp_packet_writer_config.h"],
+    deps=[
         "//include/envoy/config:typed_config_interface",
         "//include/envoy/network:udp_packet_writer_handler_interface",
     ],
 )
 
 envoy_cc_library(
-    name = "proxy_protocol_options_lib",
-    hdrs = ["proxy_protocol.h"],
-    deps = [
+    name="proxy_protocol_options_lib",
+    hdrs=["proxy_protocol.h"],
+    deps=[
         ":address_interface",
     ],
 )

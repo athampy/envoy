@@ -1,4 +1,4 @@
-#include "common/network/io_socket_handle_impl.h"
+#include "common/network/async_io_socket_handle_impl.h"
 
 #include "envoy/api/os_sys_calls_common.h"
 #include "envoy/buffer/buffer.h"
@@ -13,6 +13,7 @@
 
 using Envoy::Api::SysCallIntResult;
 using Envoy::Api::SysCallSizeResult;
+using Envoy::Api::SysCallSocketResult;
 
 namespace Envoy {
 
@@ -439,6 +440,22 @@ Api::SysCallIntResult IoSocketHandleImpl::bind(Address::InstanceConstSharedPtr a
 
 Api::SysCallIntResult IoSocketHandleImpl::listen(int backlog) {
   return Api::OsSysCallsSingleton::get().listen(fd_, backlog);
+}
+
+IoHandlePtr IoSocketHandleImpl::accept_async(struct sockaddr* addr, socklen_t* addrlen) {
+  struct io_uring_cqe* cqe;
+  add_accept_request(fd_, addr, addrlen);
+  auto ret = io_uring_wait_cqe(&acceptq, &cqe);
+  if (ret < 0)
+    ENVOY_LOG(warn, "io_uring_wait_cqe");
+  IORequest* req = reinterpret_cast<IORequest*>(cqe->user_data);
+  if (cqe->res < 0) {
+    ENVOY_LOG(warn, "Async request failed: %s for event: %d\n", strerror(-cqe->res),
+              req->requestType);
+  }
+
+  auto result = SysCallSocketResult{static_cast<int>(cqe->user_data), cqe->res};
+  return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
 }
 
 IoHandlePtr IoSocketHandleImpl::accept(struct sockaddr* addr, socklen_t* addrlen) {

@@ -9,8 +9,8 @@ envoy_package()
 # autotools packages are unusable on Windows as-is
 # TODO: Consider our own gperftools.BUILD file as we do with many other packages
 configure_make(
-    name = "gperftools_build",
-    configure_options = [
+    name="gperftools_build",
+    configure_options=[
         "--enable-shared=no",
         "--enable-frame-pointers",
         "--disable-libunwind",
@@ -18,94 +18,109 @@ configure_make(
         "//bazel:apple": ["AR=/usr/bin/ar"],
         "//conditions:default": [],
     }),
-    lib_source = "@com_github_gperftools_gperftools//:all",
-    linkopts = ["-lpthread"],
-    make_commands = ["make install-libLTLIBRARIES install-perftoolsincludeHEADERS"],
-    static_libraries = select({
+    lib_source="@com_github_gperftools_gperftools//:all",
+    linkopts=["-lpthread"],
+    make_commands=[
+        "make install-libLTLIBRARIES install-perftoolsincludeHEADERS"
+    ],
+    static_libraries=select({
         "//bazel:debug_tcmalloc": ["libtcmalloc_debug.a"],
         "//conditions:default": ["libtcmalloc_and_profiler.a"],
     }),
-    tags = ["skip_on_windows"],
+    tags=["skip_on_windows"],
 )
 
 # Workaround for https://github.com/bazelbuild/rules_foreign_cc/issues/227
 cc_library(
-    name = "gperftools",
-    tags = ["skip_on_windows"],
-    deps = [
+    name="gperftools",
+    tags=["skip_on_windows"],
+    deps=[
         "gperftools_build",
     ],
 )
 
 configure_make(
-    name = "luajit",
-    configure_command = "build.py",
-    configure_env_vars = select({
+    name="luajit",
+    configure_command="build.py",
+    configure_env_vars=select({
         # This shouldn't be needed! See
         # https://github.com/envoyproxy/envoy/issues/6084
         # TODO(htuch): Remove when #6084 is fixed
-        "//bazel:asan_build": {"ENVOY_CONFIG_ASAN": "1"},
-        "//bazel:msan_build": {"ENVOY_CONFIG_MSAN": "1"},
-        "//bazel:windows_dbg_build": {"WINDOWS_DBG_BUILD": "debug"},
+        "//bazel:asan_build": {
+            "ENVOY_CONFIG_ASAN": "1"
+        },
+        "//bazel:msan_build": {
+            "ENVOY_CONFIG_MSAN": "1"
+        },
+        "//bazel:windows_dbg_build": {
+            "WINDOWS_DBG_BUILD": "debug"
+        },
         "//conditions:default": {},
     }),
-    lib_source = "@com_github_luajit_luajit//:all",
-    make_commands = [],
-    out_include_dir = "include/luajit-2.1",
-    static_libraries = select({
+    lib_source="@com_github_luajit_luajit//:all",
+    make_commands=[],
+    out_include_dir="include/luajit-2.1",
+    static_libraries=select({
         "//bazel:windows_x86_64": ["lua51.lib"],
         "//conditions:default": ["libluajit-5.1.a"],
     }),
 )
 
 configure_make(
-    name = "moonjit",
-    configure_command = "build.py",
-    configure_env_vars = select({
+    name="moonjit",
+    configure_command="build.py",
+    configure_env_vars=select({
         # This shouldn't be needed! See
         # https://github.com/envoyproxy/envoy/issues/6084
         # TODO(htuch): Remove when #6084 is fixed
-        "//bazel:asan_build": {"ENVOY_CONFIG_ASAN": "1"},
-        "//bazel:msan_build": {"ENVOY_CONFIG_MSAN": "1"},
-        "//bazel:windows_dbg_build": {"WINDOWS_DBG_BUILD": "debug"},
+        "//bazel:asan_build": {
+            "ENVOY_CONFIG_ASAN": "1"
+        },
+        "//bazel:msan_build": {
+            "ENVOY_CONFIG_MSAN": "1"
+        },
+        "//bazel:windows_dbg_build": {
+            "WINDOWS_DBG_BUILD": "debug"
+        },
         "//conditions:default": {},
     }),
-    lib_source = "@com_github_moonjit_moonjit//:all",
-    make_commands = [],
-    out_include_dir = "include/moonjit-2.2",
-    static_libraries = select({
+    lib_source="@com_github_moonjit_moonjit//:all",
+    make_commands=[],
+    out_include_dir="include/moonjit-2.2",
+    static_libraries=select({
         "//bazel:windows_x86_64": ["lua51.lib"],
         "//conditions:default": ["libluajit-5.1.a"],
     }),
 )
 
 envoy_cmake_external(
-    name = "ares",
-    cache_entries = {
+    name="ares",
+    cache_entries={
         "CARES_SHARED": "no",
         "CARES_STATIC": "on",
         "CMAKE_CXX_COMPILER_FORCED": "on",
         "CMAKE_INSTALL_LIBDIR": "lib",
     },
-    defines = ["CARES_STATICLIB"],
-    lib_source = "@com_github_c_ares_c_ares//:all",
-    linkopts = select({
+    defines=["CARES_STATICLIB"],
+    lib_source="@com_github_c_ares_c_ares//:all",
+    linkopts=select({
         "//bazel:apple": ["-lresolv"],
         "//conditions:default": [],
     }),
-    postfix_script = select({
-        "//bazel:windows_x86_64": "cp -L $EXT_BUILD_ROOT/external/com_github_c_ares_c_ares/nameser.h $INSTALLDIR/include/nameser.h",
+    postfix_script=select({
+        "//bazel:windows_x86_64":
+        "cp -L $EXT_BUILD_ROOT/external/com_github_c_ares_c_ares/nameser.h $INSTALLDIR/include/nameser.h",
         "//conditions:default": "",
     }),
-    static_libraries = select({
+    static_libraries=select({
         "//bazel:windows_x86_64": ["cares.lib"],
         "//conditions:default": ["libcares.a"],
     }),
 )
 
 envoy_cmake_external(
-    name = "curl",
-    cache_entries = {
+    name="curl",
+    cache_entries={
         "BUILD_CURL_EXE": "off",
         "BUILD_TESTING": "off",
         "BUILD_SHARED_LIBS": "off",
@@ -144,14 +159,14 @@ envoy_cmake_external(
         # See https://github.com/bazelbuild/rules_foreign_cc/issues/426
         "CURL_STATIC_CRT": "on",
     },
-    defines = ["CURL_STATICLIB"],
-    generate_crosstool_file = True,
-    lib_source = "@com_github_curl//:all",
-    static_libraries = select({
+    defines=["CURL_STATICLIB"],
+    generate_crosstool_file=True,
+    lib_source="@com_github_curl//:all",
+    static_libraries=select({
         "//bazel:windows_x86_64": ["libcurl.lib"],
         "//conditions:default": ["libcurl.a"],
     }),
-    deps = [
+    deps=[
         ":ares",
         ":nghttp2",
         ":zlib",
@@ -159,9 +174,17 @@ envoy_cmake_external(
     ],
 )
 
+configure_make(
+    name="liburing",
+    lib_source="@com_github_axboe_liburing//:all",
+    make_commands=["ls && pwd", "make", "make install"],
+    configure_in_place=True,
+    tags=["skip_on_windows"],
+)
+
 envoy_cmake_external(
-    name = "event",
-    cache_entries = {
+    name="event",
+    cache_entries={
         "EVENT__DISABLE_OPENSSL": "on",
         "EVENT__DISABLE_MBEDTLS": "on",
         "EVENT__DISABLE_REGRESS": "on",
@@ -175,8 +198,8 @@ envoy_cmake_external(
         # More details https://github.com/lyft/envoy-mobile/issues/116
         "_GNU_SOURCE": "on",
     },
-    lib_source = "@com_github_libevent_libevent//:all",
-    static_libraries = select({
+    lib_source="@com_github_libevent_libevent//:all",
+    static_libraries=select({
         # macOS organization of libevent is different from Windows/Linux.
         # Including libevent_core is a requirement on those platforms, but
         # results in duplicate symbols when built on macOS.
@@ -198,27 +221,27 @@ envoy_cmake_external(
 )
 
 envoy_cmake_external(
-    name = "nghttp2",
-    cache_entries = {
+    name="nghttp2",
+    cache_entries={
         "ENABLE_LIB_ONLY": "on",
         "ENABLE_SHARED_LIB": "off",
         "ENABLE_STATIC_LIB": "on",
         "CMAKE_INSTALL_LIBDIR": "lib",
         "CMAKE_CXX_COMPILER_FORCED": "on",
     },
-    cmake_files_dir = "$BUILD_TMPDIR/lib/CMakeFiles",
-    debug_cache_entries = {"ENABLE_DEBUG": "on"},
-    defines = ["NGHTTP2_STATICLIB"],
-    lib_source = "@com_github_nghttp2_nghttp2//:all",
-    static_libraries = select({
+    cmake_files_dir="$BUILD_TMPDIR/lib/CMakeFiles",
+    debug_cache_entries={"ENABLE_DEBUG": "on"},
+    defines=["NGHTTP2_STATICLIB"],
+    lib_source="@com_github_nghttp2_nghttp2//:all",
+    static_libraries=select({
         "//bazel:windows_x86_64": ["nghttp2.lib"],
         "//conditions:default": ["libnghttp2.a"],
     }),
 )
 
 envoy_cmake_external(
-    name = "zlib",
-    cache_entries = {
+    name="zlib",
+    cache_entries={
         "BUILD_SHARED_LIBS": "off",
         "CMAKE_CXX_COMPILER_FORCED": "on",
         "CMAKE_C_COMPILER_FORCED": "on",
@@ -245,11 +268,11 @@ envoy_cmake_external(
         # Reference: https://github.com/zlib-ng/zlib-ng#advanced-build-options.
         "UNALIGNED_OK": "off",
     },
-    lib_source = select({
+    lib_source=select({
         "//bazel:zlib_ng": "@com_github_zlib_ng_zlib_ng//:all",
         "//conditions:default": "@net_zlib//:all",
     }),
-    static_libraries = select({
+    static_libraries=select({
         "//bazel:windows_x86_64": ["zlibstatic.lib"],
         "//conditions:default": ["libz.a"],
     }),

@@ -13,9 +13,12 @@
 namespace Envoy {
 namespace Network {
 
-/**
- * IoHandle derivative for sockets.
- */
+  enum IORequestType{ ACCEPT, READ, WRITE};
+  class IORequest {
+    public:
+      int requestType;
+      IORequest(int requestType):requestType(requestType){}
+  };
 class IoSocketHandleImpl : public IoHandle, protected Logger::Loggable<Logger::Id::io> {
 public:
   explicit IoSocketHandleImpl(os_fd_t fd = INVALID_SOCKET, bool socket_v6only = false,
@@ -55,6 +58,7 @@ public:
   Api::SysCallIntResult bind(Address::InstanceConstSharedPtr address) override;
   Api::SysCallIntResult listen(int backlog) override;
   IoHandlePtr accept(struct sockaddr* addr, socklen_t* addrlen) override;
+  IoHandlePtr accept_async(struct sockaddr* addr, socklen_t* addrlen) ;
   Api::SysCallIntResult connect(Address::InstanceConstSharedPtr address) override;
   Api::SysCallIntResult setOption(int level, int optname, const void* optval,
                                   socklen_t optlen) override;
@@ -86,6 +90,19 @@ protected:
                                IoSocketError::deleteIoError)
              : Api::IoErrorPtr(new IoSocketError(result.errno_), IoSocketError::deleteIoError)));
   }
+
+  int add_accept_request(int server_socket, struct sockaddr *client_addr,
+                       socklen_t *client_addr_len) {
+    auto *sqe = io_uring_get_sqe(&acceptq);
+    io_uring_prep_accept(sqe, server_socket, reinterpret_cast<struct sockaddr *>(client_addr),
+                         client_addr_len, 0);
+    auto req = new IORequest(ACCEPT);
+    io_uring_sqe_set_data(sqe, req);
+    io_uring_submit(&acceptq);
+    return 0;
+}
+
+  struct io_uring acceptq;
   os_fd_t fd_;
   int socket_v6only_{false};
   const absl::optional<int> domain_;

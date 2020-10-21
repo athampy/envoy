@@ -7,7 +7,7 @@
 namespace Envoy {
 namespace Network {
 
-class SocketInterfaceImpl : public SocketInterfaceBase {
+class AsyncSocketInterfaceImpl : public SocketInterfaceBase {
 public:
   // SocketInterface
   IoHandlePtr socket(Socket::Type socket_type, Address::Type addr_type, Address::IpVersion version,
@@ -31,7 +31,7 @@ protected:
                                  absl::optional<int> domain) const;
 };
 
-DECLARE_FACTORY(SocketInterfaceImpl);
+DECLARE_FACTORY(AsyncSocketInterfaceImpl);
 
 } // namespace Network
 } // namespace Envoy
