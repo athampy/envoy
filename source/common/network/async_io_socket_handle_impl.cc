@@ -54,23 +54,23 @@ in_addr addressFromMessage(const cmsghdr& cmsg) {
 
 namespace Network {
 
-IoSocketHandleImpl::~IoSocketHandleImpl() {
+AsyncIoSocketHandleImpl::~AsyncIoSocketHandleImpl() {
   if (SOCKET_VALID(fd_)) {
-    IoSocketHandleImpl::close();
+    AsyncIoSocketHandleImpl::close();
   }
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::close() {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::close() {
   ASSERT(SOCKET_VALID(fd_));
   const int rc = Api::OsSysCallsSingleton::get().close(fd_).rc_;
   SET_SOCKET_INVALID(fd_);
   return Api::IoCallUint64Result(rc, Api::IoErrorPtr(nullptr, IoSocketError::deleteIoError));
 }
 
-bool IoSocketHandleImpl::isOpen() const { return SOCKET_VALID(fd_); }
+bool AsyncIoSocketHandleImpl::isOpen() const { return SOCKET_VALID(fd_); }
 
-Api::IoCallUint64Result IoSocketHandleImpl::readv(uint64_t max_length, Buffer::RawSlice* slices,
-                                                  uint64_t num_slice) {
+Api::IoCallUint64Result
+AsyncIoSocketHandleImpl::readv(uint64_t max_length, Buffer::RawSlice* slices, uint64_t num_slice) {
   absl::FixedArray<iovec> iov(num_slice);
   uint64_t num_slices_to_read = 0;
   uint64_t num_bytes_to_read = 0;
@@ -86,7 +86,8 @@ Api::IoCallUint64Result IoSocketHandleImpl::readv(uint64_t max_length, Buffer::R
       fd_, iov.begin(), static_cast<int>(num_slices_to_read)));
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::read(Buffer::Instance& buffer, uint64_t max_length) {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::read(Buffer::Instance& buffer,
+                                                      uint64_t max_length) {
   if (max_length == 0) {
     return Api::ioCallUint64ResultNoError();
   }
@@ -104,8 +105,8 @@ Api::IoCallUint64Result IoSocketHandleImpl::read(Buffer::Instance& buffer, uint6
   return result;
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::writev(const Buffer::RawSlice* slices,
-                                                   uint64_t num_slice) {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::writev(const Buffer::RawSlice* slices,
+                                                        uint64_t num_slice) {
   absl::FixedArray<iovec> iov(num_slice);
   uint64_t num_slices_to_write = 0;
   for (uint64_t i = 0; i < num_slice; i++) {
@@ -122,10 +123,10 @@ Api::IoCallUint64Result IoSocketHandleImpl::writev(const Buffer::RawSlice* slice
       Api::OsSysCallsSingleton::get().writev(fd_, iov.begin(), num_slices_to_write));
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::sendmsg(const Buffer::RawSlice* slices,
-                                                    uint64_t num_slice, int flags,
-                                                    const Address::Ip* self_ip,
-                                                    const Address::Instance& peer_address) {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::sendmsg(const Buffer::RawSlice* slices,
+                                                         uint64_t num_slice, int flags,
+                                                         const Address::Ip* self_ip,
+                                                         const Address::Instance& peer_address) {
   const auto* address_base = dynamic_cast<const Address::InstanceBase*>(&peer_address);
   sockaddr* sock_addr = const_cast<sockaddr*>(address_base->sockAddr());
   if (sock_addr == nullptr) {
@@ -254,9 +255,10 @@ absl::optional<uint32_t> maybeGetPacketsDroppedFromHeader([[maybe_unused]] const
   return absl::nullopt;
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::recvmsg(Buffer::RawSlice* slices,
-                                                    const uint64_t num_slice, uint32_t self_port,
-                                                    RecvMsgOutput& output) {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::recvmsg(Buffer::RawSlice* slices,
+                                                         const uint64_t num_slice,
+                                                         uint32_t self_port,
+                                                         RecvMsgOutput& output) {
   ASSERT(!output.msg_.empty());
 
   absl::FixedArray<char> cbuf(cmsg_space_);
@@ -327,8 +329,9 @@ Api::IoCallUint64Result IoSocketHandleImpl::recvmsg(Buffer::RawSlice* slices,
   return sysCallResultToIoCallResult(result);
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::recvmmsg(RawSliceArrays& slices, uint32_t self_port,
-                                                     RecvMsgOutput& output) {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::recvmmsg(RawSliceArrays& slices,
+                                                          uint32_t self_port,
+                                                          RecvMsgOutput& output) {
   ASSERT(output.msg_.size() == slices.size());
   if (slices.empty()) {
     return sysCallResultToIoCallResult(Api::SysCallIntResult{0, SOCKET_ERROR_AGAIN});
@@ -420,29 +423,29 @@ Api::IoCallUint64Result IoSocketHandleImpl::recvmmsg(RawSliceArrays& slices, uin
   return sysCallResultToIoCallResult(result);
 }
 
-Api::IoCallUint64Result IoSocketHandleImpl::recv(void* buffer, size_t length, int flags) {
+Api::IoCallUint64Result AsyncIoSocketHandleImpl::recv(void* buffer, size_t length, int flags) {
   const Api::SysCallSizeResult result =
       Api::OsSysCallsSingleton::get().recv(fd_, buffer, length, flags);
   return sysCallResultToIoCallResult(result);
 }
 
-bool IoSocketHandleImpl::supportsMmsg() const {
+bool AsyncIoSocketHandleImpl::supportsMmsg() const {
   return Api::OsSysCallsSingleton::get().supportsMmsg();
 }
 
-bool IoSocketHandleImpl::supportsUdpGro() const {
+bool AsyncIoSocketHandleImpl::supportsUdpGro() const {
   return Api::OsSysCallsSingleton::get().supportsUdpGro();
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::bind(Address::InstanceConstSharedPtr address) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::bind(Address::InstanceConstSharedPtr address) {
   return Api::OsSysCallsSingleton::get().bind(fd_, address->sockAddr(), address->sockAddrLen());
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::listen(int backlog) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::listen(int backlog) {
   return Api::OsSysCallsSingleton::get().listen(fd_, backlog);
 }
 
-IoHandlePtr IoSocketHandleImpl::accept_async(struct sockaddr* addr, socklen_t* addrlen) {
+IoHandlePtr AsyncIoSocketHandleImpl::accept_async(struct sockaddr* addr, socklen_t* addrlen) {
   struct io_uring_cqe* cqe;
   add_accept_request(fd_, addr, addrlen);
   auto ret = io_uring_wait_cqe(&acceptq, &cqe);
@@ -455,39 +458,39 @@ IoHandlePtr IoSocketHandleImpl::accept_async(struct sockaddr* addr, socklen_t* a
   }
 
   auto result = SysCallSocketResult{static_cast<int>(cqe->user_data), cqe->res};
-  return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
+  return std::make_unique<AsyncIoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
 }
 
-IoHandlePtr IoSocketHandleImpl::accept(struct sockaddr* addr, socklen_t* addrlen) {
+IoHandlePtr AsyncIoSocketHandleImpl::accept(struct sockaddr* addr, socklen_t* addrlen) {
   auto result = Api::OsSysCallsSingleton::get().accept(fd_, addr, addrlen);
   if (SOCKET_INVALID(result.rc_)) {
     return nullptr;
   }
 
-  return std::make_unique<IoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
+  return std::make_unique<AsyncIoSocketHandleImpl>(result.rc_, socket_v6only_, domain_);
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::connect(Address::InstanceConstSharedPtr address) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::connect(Address::InstanceConstSharedPtr address) {
   return Api::OsSysCallsSingleton::get().connect(fd_, address->sockAddr(), address->sockAddrLen());
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::setOption(int level, int optname, const void* optval,
-                                                    socklen_t optlen) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::setOption(int level, int optname, const void* optval,
+                                                         socklen_t optlen) {
   return Api::OsSysCallsSingleton::get().setsockopt(fd_, level, optname, optval, optlen);
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::getOption(int level, int optname, void* optval,
-                                                    socklen_t* optlen) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::getOption(int level, int optname, void* optval,
+                                                         socklen_t* optlen) {
   return Api::OsSysCallsSingleton::get().getsockopt(fd_, level, optname, optval, optlen);
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::setBlocking(bool blocking) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::setBlocking(bool blocking) {
   return Api::OsSysCallsSingleton::get().setsocketblocking(fd_, blocking);
 }
 
-absl::optional<int> IoSocketHandleImpl::domain() { return domain_; }
+absl::optional<int> AsyncIoSocketHandleImpl::domain() { return domain_; }
 
-Address::InstanceConstSharedPtr IoSocketHandleImpl::localAddress() {
+Address::InstanceConstSharedPtr AsyncIoSocketHandleImpl::localAddress() {
   sockaddr_storage ss;
   socklen_t ss_len = sizeof(ss);
   auto& os_sys_calls = Api::OsSysCallsSingleton::get();
@@ -500,7 +503,7 @@ Address::InstanceConstSharedPtr IoSocketHandleImpl::localAddress() {
   return Address::addressFromSockAddr(ss, ss_len, socket_v6only_);
 }
 
-Address::InstanceConstSharedPtr IoSocketHandleImpl::peerAddress() {
+Address::InstanceConstSharedPtr AsyncIoSocketHandleImpl::peerAddress() {
   sockaddr_storage ss;
   socklen_t ss_len = sizeof ss;
   auto& os_sys_calls = Api::OsSysCallsSingleton::get();
@@ -525,18 +528,18 @@ Address::InstanceConstSharedPtr IoSocketHandleImpl::peerAddress() {
   return Address::addressFromSockAddr(ss, ss_len);
 }
 
-Event::FileEventPtr IoSocketHandleImpl::createFileEvent(Event::Dispatcher& dispatcher,
-                                                        Event::FileReadyCb cb,
-                                                        Event::FileTriggerType trigger,
-                                                        uint32_t events) {
+Event::FileEventPtr AsyncIoSocketHandleImpl::createFileEvent(Event::Dispatcher& dispatcher,
+                                                             Event::FileReadyCb cb,
+                                                             Event::FileTriggerType trigger,
+                                                             uint32_t events) {
   return dispatcher.createFileEvent(fd_, cb, trigger, events);
 }
 
-Api::SysCallIntResult IoSocketHandleImpl::shutdown(int how) {
+Api::SysCallIntResult AsyncIoSocketHandleImpl::shutdown(int how) {
   return Api::OsSysCallsSingleton::get().shutdown(fd_, how);
 }
 
-absl::optional<std::chrono::milliseconds> IoSocketHandleImpl::lastRoundTripTime() {
+absl::optional<std::chrono::milliseconds> AsyncIoSocketHandleImpl::lastRoundTripTime() {
 #ifdef TCP_INFO
   struct tcp_info ti;
   socklen_t len = sizeof(ti);

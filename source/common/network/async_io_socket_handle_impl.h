@@ -4,7 +4,7 @@
 #include "envoy/api/os_sys_calls.h"
 #include "envoy/common/platform.h"
 #include "envoy/event/dispatcher.h"
-#include "envoy/network/io_handle.h"
+#include "envoy/network/async_io_handle.h"
 
 #include "liburing.h"
 #include "common/common/logger.h"
@@ -19,14 +19,14 @@ namespace Network {
       int requestType;
       IORequest(int requestType):requestType(requestType){}
   };
-class IoSocketHandleImpl : public IoHandle, protected Logger::Loggable<Logger::Id::io> {
+class AsyncIoSocketHandleImpl : public IoHandle, protected Logger::Loggable<Logger::Id::io> {
 public:
-  explicit IoSocketHandleImpl(os_fd_t fd = INVALID_SOCKET, bool socket_v6only = false,
+  explicit AsyncIoSocketHandleImpl(os_fd_t fd = INVALID_SOCKET, bool socket_v6only = false,
                               absl::optional<int> domain = absl::nullopt)
       : fd_(fd), socket_v6only_(socket_v6only), domain_(domain) {}
 
   // Close underlying socket if close() hasn't been call yet.
-  ~IoSocketHandleImpl() override;
+  ~AsyncIoSocketHandleImpl() override;
 
   // TODO(sbelair2)  To be removed when the fd is fully abstracted from clients.
   os_fd_t fdDoNotUse() const override { return fd_; }

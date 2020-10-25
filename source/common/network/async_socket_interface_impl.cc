@@ -13,7 +13,7 @@ namespace Network {
 
 IoHandlePtr AsyncSocketInterfaceImpl::makeSocket(int socket_fd, bool socket_v6only,
                                                  absl::optional<int> domain) const {
-  return std::make_unique<IoSocketHandleImpl>(socket_fd, socket_v6only, domain);
+  return std::make_unique<AsyncIoSocketHandleImpl>(socket_fd, socket_v6only, domain);
 }
 
 IoHandlePtr AsyncSocketInterfaceImpl::socket(Socket::Type socket_type, Address::Type addr_type,
@@ -80,7 +80,7 @@ IoHandlePtr AsyncSocketInterfaceImpl::socket(Socket::Type socket_type,
 }
 
 IoHandlePtr AsyncSocketInterfaceImpl::socket(os_fd_t fd) {
-  return std::make_unique<IoSocketHandleImpl>(fd);
+  return std::make_unique<AsyncIoSocketHandleImpl>(fd);
 }
 
 bool AsyncSocketInterfaceImpl::ipFamilySupported(int domain) {
